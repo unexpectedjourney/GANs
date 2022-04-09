@@ -1,12 +1,10 @@
-from collections import OrderedDict
-
 import wandb
 import torch
 import torch.nn.functional as F
 import pytorch_lightning as pl
 from torchvision import utils
 
-from src.models import Discriminator, Generator
+from src.gan_models import Discriminator, Generator
 
 
 class GAN(pl.LightningModule):
