@@ -1,9 +1,29 @@
+import pandas as pd
 import pytorch_lightning as pl
-from torchvision import transforms
-from torch.utils.data import DataLoader
+from PIL import Image
+from torch.utils.data import DataLoader, Dataset
+from torchvision import transforms as T
 
 
-class BirdDataset(pl.LightningDataModule):
+class BirdDataset(Dataset):
+    def __inti__(self, df, transform=None):
+        self.df = df
+        self.transform = transform
+
+    def __getitem__(self, idx):
+        image_path = self.df.loc[idx, "image_path"]
+        img = Image.open(image_path)
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return img
+
+    def __len__(self):
+        return self.df.shape[0]
+
+
+class BirdDataModule(pl.LightningDataModule):
     def __init__(
         self,
         data_dir,
@@ -15,30 +35,43 @@ class BirdDataset(pl.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
 
-        self.transform = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize((0.1307,), (0.3081,)),
+        self.transform = T.Compose([
+            T.Resize(224, 224),
+            T.ToTensor(),
+            T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
         ])
 
-        self.dims = (1, 28, 28)
+        self.dims = (3, 224, 224)
+        self.df = pd.read_csv("data/data.csv")
 
     def setup(self, stage=None):
         if stage == "fit" or stage is None:
-            mnist_full = MNIST(self.data_dir, train=True, transform=self.transform)
-            self.mnist_train, self.mnist_val = random_split(mnist_full, [55000, 5000])
+            train_subset = self.df[self.df.split == "train"].reset_index(drop=True)
+            val_subset = self.df[self.df.split == "valid"].reset_index(drop=True)
+            self.train_data = BirdDataset(train_subset, self.transform)
+            self.val_data = BirdDataset(val_subset, self.transform)
 
         if stage == "test" or stage is None:
-            self.mnist_test = MNIST(self.data_dir, train=False, transform=self.transform)
+            test_subset = self.df[self.df.split == "test"].reset_index(drop=True)
+            self.test_data = BirdDataset(test_subset, self.transform)
 
     def train_dataloader(self):
         return DataLoader(
-            self.mnist_train,
+            self.train_data,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
         )
 
     def val_dataloader(self):
-        return DataLoader(self.mnist_val, batch_size=self.batch_size, num_workers=self.num_workers)
+        return DataLoader(
+            self.val_data,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+        )
 
     def test_dataloader(self):
-        return DataLoader(self.mnist_test, batch_size=self.batch_size, num_workers=self.num_workers)
+        return DataLoader(
+            self.test_data,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+        )

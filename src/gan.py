@@ -1,8 +1,9 @@
 from collections import OrderedDict
 
-import pytorch_lightning as pl
+import wandb
 import torch
 import torch.nn.functional as F
+import pytorch_lightning as pl
 from torchvision import utils
 
 from models import Discriminator, Generator
@@ -52,8 +53,11 @@ class GAN(pl.LightningModule):
 
             sample_imgs = self.generated_imgs[:6]
             grid = utils.make_grid(sample_imgs)
-            self.logger.experiment.add_image("generated_images", grid, 0)
-
+            self.logger.experiment.log({
+                "generated_images": [
+                    wandb.Image(grid)
+                ]
+            })
             valid = torch.ones(imgs.size(0), 1)
             valid = valid.type_as(imgs)
 
@@ -64,7 +68,13 @@ class GAN(pl.LightningModule):
                 "progress_bar": tqdm_dict,
                 "log": tqdm_dict
             })
-
+            self.log(
+                'g_loss',
+                g_loss,
+                on_step=True,
+                on_epoch=True,
+                logger=True,
+            )
         if optimizer_idx == 1:
             valid = torch.ones(imgs.size(0), 1)
             valid = valid.type_as(imgs)
@@ -82,6 +92,13 @@ class GAN(pl.LightningModule):
                 "progress_bar": tqdm_dict,
                 "log": tqdm_dict
             })
+            self.log(
+                'd_loss',
+                d_loss,
+                on_step=True,
+                on_epoch=True,
+                logger=True,
+            )
         return output
 
     def configure_optimizers(self):
@@ -98,6 +115,8 @@ class GAN(pl.LightningModule):
 
         sample_imgs = self(z)
         grid = utils.make_grid(sample_imgs)
-        self.logger.experiment.add_image(
-            "generated_images", grid, self.current_epoch
-        )
+        self.logger.experiment.log({
+            "generated_images": [
+                wandb.Image(grid)
+            ]
+        })
