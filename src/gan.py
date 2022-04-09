@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 from torchvision import utils
 
-from models import Discriminator, Generator
+from src.models import Discriminator, Generator
 
 
 class GAN(pl.LightningModule):
