@@ -21,11 +21,6 @@ class BirdDataset(pl.LightningDataModule):
         ])
 
         self.dims = (1, 28, 28)
-        self.num_classes = 10
-
-    def prepare_data(self):
-        MNIST(self.data_dir, train=True, download=True)
-        MNIST(self.data_dir, train=False, download=True)
 
     def setup(self, stage=None):
         if stage == "fit" or stage is None:

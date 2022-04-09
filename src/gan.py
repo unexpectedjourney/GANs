@@ -1,20 +1,39 @@
 from collections import OrderedDict
 
+import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
-import pytorch_lightning as pl
 from torchvision import utils
 
 from models import Discriminator, Generator
 
 
 class GAN(pl.LightningModule):
-    def __init__(self):
+    def __init__(
+            self,
+            channels,
+            width,
+            height,
+            conf,
+    ):
         super().__init__()
         self.save_hyperparameters()
         data_shape = (channels, width, height)
-        self.generator = Generator(latent_dim=latent_dim, img_shape=data_shape)
+
+        self.conf = conf
+        self.latent_dim = conf.get("latent_dim", 100)
+        train_params = conf.get("train", {})
+        self.lr = train_params.get("lr")
+        self.b1 = train_params.get("b1")
+        self.b2 = train_params.get("b2")
+
+        self.generator = Generator(
+            latent_dim=self.latent_dim,
+            img_shape=data_shape
+        )
         self.discriminator = Discriminator(img_shape=data_shape)
+
+        self.validation_z = torch.randn(8, self.latent_dim)
 
     def forward(self, x):
         return self.generator(x)
@@ -25,7 +44,7 @@ class GAN(pl.LightningModule):
     def train_step(self, batch, batch_idx, optimizer_idx):
         imgs, _ = batch
 
-        z = torch.randn(imgs.shape[0], latent_dim)
+        z = torch.randn(imgs.shape[0], self.latent_dim)
         z = z.type_as(imgs)
 
         if optimizer_idx == 0:
@@ -53,7 +72,8 @@ class GAN(pl.LightningModule):
 
             fake = torch.zeros(imgs.size(0), 1)
             fake = fake.type_as(imgs)
-            fake_loss = self.adversarial_loss(self.discriminator(self(z).detach()), fake)
+            fake_loss = self.adversarial_loss(
+                self.discriminator(self(z).detach()), fake)
 
             d_loss = (real_loss + fake_loss) / 2
             tqdm_dict = {"d_loss": d_loss}
@@ -65,12 +85,12 @@ class GAN(pl.LightningModule):
         return output
 
     def configure_optimizers(self):
-        lr = self.hparams.lr
-        b1 = self.hparams.b1
-        b2 = self.hparams.b2
-
-        opt_g = torch.optim.Adam(self.generator.parameters(), lr=lr, betas=(b1, b2))
-        opt_d = torch.optim.Adam(self.discriminator.parameters(), lr=lr, betas=(b1, b2))
+        opt_g = torch.optim.Adam(
+            self.generator.parameters(), lr=self.lr, betas=(self.b1, self.b2)
+        )
+        opt_d = torch.optim.Adam(
+            self.discriminator.parameters(), lr=self.lr, betas=(self.b1, self.b2)
+        )
         return [opt_g, opt_d], []
 
     def on_epoch_end(self):
@@ -78,4 +98,6 @@ class GAN(pl.LightningModule):
 
         sample_imgs = self(z)
         grid = utils.make_grid(sample_imgs)
-        self.logger.experiment.add_image("generated_images", grid, self.current_epoch)
+        self.logger.experiment.add_image(
+            "generated_images", grid, self.current_epoch
+        )
