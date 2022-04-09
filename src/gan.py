@@ -12,14 +12,11 @@ from src.models import Discriminator, Generator
 class GAN(pl.LightningModule):
     def __init__(
             self,
-            channels,
-            width,
-            height,
             conf,
     ):
         super().__init__()
         self.save_hyperparameters()
-        data_shape = (channels, width, height)
+        data_shape = (3, 224, 224)
 
         self.conf = conf
         self.latent_dim = conf.get("latent_dim", 100)
@@ -47,7 +44,7 @@ class GAN(pl.LightningModule):
 
         z = torch.randn(imgs.shape[0], self.latent_dim)
         z = z.type_as(imgs)
-
+        loss = 0
         if optimizer_idx == 0:
             self.generated_imgs = self(z)
 
@@ -61,20 +58,8 @@ class GAN(pl.LightningModule):
             valid = torch.ones(imgs.size(0), 1)
             valid = valid.type_as(imgs)
 
-            g_loss = self.adversarial_loss(self.discriminator(self(z)), valid)
-            tqdm_dict = {"g_loss": g_loss}
-            output = OrderedDict({
-                "loss": g_loss,
-                "progress_bar": tqdm_dict,
-                "log": tqdm_dict
-            })
-            self.log(
-                'g_loss',
-                g_loss,
-                on_step=True,
-                on_epoch=True,
-                logger=True,
-            )
+            loss = self.adversarial_loss(self.discriminator(self(z)), valid)
+            self.log('g_loss', loss, logger=True)
         if optimizer_idx == 1:
             valid = torch.ones(imgs.size(0), 1)
             valid = valid.type_as(imgs)
@@ -82,24 +67,11 @@ class GAN(pl.LightningModule):
 
             fake = torch.zeros(imgs.size(0), 1)
             fake = fake.type_as(imgs)
-            fake_loss = self.adversarial_loss(
-                self.discriminator(self(z).detach()), fake)
+            fake_loss = self.adversarial_loss(self.discriminator(self(z)), fake)
 
-            d_loss = (real_loss + fake_loss) / 2
-            tqdm_dict = {"d_loss": d_loss}
-            output = OrderedDict({
-                "loss": d_loss,
-                "progress_bar": tqdm_dict,
-                "log": tqdm_dict
-            })
-            self.log(
-                'd_loss',
-                d_loss,
-                on_step=True,
-                on_epoch=True,
-                logger=True,
-            )
-        return output
+            loss = (real_loss + fake_loss) / 2
+            self.log('d_loss', loss, logger=True)
+        return loss
 
     def configure_optimizers(self):
         opt_g = torch.optim.Adam(
@@ -110,7 +82,7 @@ class GAN(pl.LightningModule):
         )
         return [opt_g, opt_d], []
 
-    def on_epoch_end(self):
+    def on_train_epoch_end(self):
         z = self.validation_z.type_as(self.generator.model[0].weight)
 
         sample_imgs = self(z)

@@ -26,7 +26,7 @@ def main():
     wandb_logger = WandbLogger(project='gan', job_type='train')
 
     dm = BirdDataModule(batch_size=batch_size, num_workers=NUM_WORKERS)
-    model = GAN(*dm.size(), conf)
+    model = GAN(conf)
     trainer = pl.Trainer(
         gpus=AVAIL_GPUS,
         max_epochs=epochs,
