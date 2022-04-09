@@ -6,7 +6,7 @@ from torchvision import transforms as T
 
 
 class BirdDataset(Dataset):
-    def __inti__(self, df, transform=None):
+    def __init__(self, df, transform=None):
         self.df = df
         self.transform = transform
 
@@ -26,17 +26,15 @@ class BirdDataset(Dataset):
 class BirdDataModule(pl.LightningDataModule):
     def __init__(
         self,
-        data_dir,
         batch_size,
         num_workers,
     ):
         super().__init__()
-        self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
 
         self.transform = T.Compose([
-            T.Resize(224, 224),
+            T.Resize((224, 224)),
             T.ToTensor(),
             T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
         ])

@@ -42,8 +42,8 @@ class GAN(pl.LightningModule):
     def adversarial_loss(self, y_hat, y):
         return F.binary_cross_entropy(y_hat, y)
 
-    def train_step(self, batch, batch_idx, optimizer_idx):
-        imgs, _ = batch
+    def training_step(self, batch, batch_idx, optimizer_idx):
+        imgs = batch
 
         z = torch.randn(imgs.shape[0], self.latent_dim)
         z = z.type_as(imgs)
