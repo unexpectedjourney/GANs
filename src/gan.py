@@ -1,4 +1,3 @@
-import wandb
 import torch
 import torch.nn.functional as F
 import pytorch_lightning as pl
@@ -48,11 +47,11 @@ class GAN(pl.LightningModule):
 
             sample_imgs = self.generated_imgs[:6]
             grid = utils.make_grid(sample_imgs)
-            self.logger.experiment.log({
-                "generated_images": [
-                    wandb.Image(grid)
-                ]
-            })
+            self.logger.experiment.add_image(
+                "generated_images",
+                grid,
+                self.current_epoch,
+            )
             valid = torch.ones(imgs.size(0), 1)
             valid = valid.type_as(imgs)
 
@@ -79,14 +78,3 @@ class GAN(pl.LightningModule):
             self.discriminator.parameters(), lr=self.lr, betas=(self.b1, self.b2)
         )
         return [opt_g, opt_d], []
-
-    def on_train_epoch_end(self):
-        z = self.validation_z.type_as(self.generator.model[0].weight)
-
-        sample_imgs = self(z)
-        grid = utils.make_grid(sample_imgs)
-        self.logger.experiment.log({
-            "generated_images": [
-                wandb.Image(grid)
-            ]
-        })

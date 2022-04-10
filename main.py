@@ -1,10 +1,9 @@
 import os
 
-import wandb
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers import TensorBoardLogger
 
 from src.gan import GAN
 from src.utils import load_config
@@ -23,21 +22,20 @@ def main():
         dirpath='states',
         filename='state-{epoch:02d}-{val_loss:.2f}'
     )
-    wandb_logger = WandbLogger(project='gan', job_type='train')
+    tb_logger = TensorBoardLogger("logs", name="gan")
 
     dm = BirdDataModule(batch_size=batch_size, num_workers=NUM_WORKERS)
     model = GAN(conf)
     trainer = pl.Trainer(
         gpus=AVAIL_GPUS,
         max_epochs=epochs,
-        logger=wandb_logger,
+        logger=tb_logger,
         callbacks=[
             checkpoint_callback,
         ],
 
     )
     trainer.fit(model, dm)
-    wandb.finish()
 
 
 if __name__ == "__main__":
