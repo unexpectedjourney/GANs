@@ -3,17 +3,25 @@ import torch.nn as nn
 
 
 class Block(nn.Module):
-    def __init__(self, in_features, out_features, should_normalize=True):
+    def __init__(
+        self,
+        in_features,
+        out_features,
+        should_normalize=True,
+        dropout=0.5,
+    ):
         super().__init__()
         self.linear = nn.Linear(in_features, out_features)
         self.norm = nn.BatchNorm1d(out_features, 0.8)
         self.should_normalize = should_normalize
+        self.dropout = nn.Dropout(dropout)
         self.activation = nn.LeakyReLU(0.2)
 
     def forward(self, x):
         x = self.linear(x)
         if self.should_normalize:
             x = self.norm(x)
+        x = self.dropout(x)
         x = self.activation(x)
         return x
 
@@ -52,5 +60,4 @@ class Discriminator(nn.Module):
     def forward(self, img):
         img_flat = img.view(img.size(0), -1)
         validity = self.model(img_flat)
-
         return validity
