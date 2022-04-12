@@ -2,28 +2,45 @@ import numpy as np
 import torch.nn as nn
 
 
-class Block(nn.Module):
+class GBlock(nn.Module):
     def __init__(
         self,
         in_features,
         out_features,
         should_normalize=True,
-        dropout=0.5,
     ):
         super().__init__()
         self.linear = nn.Linear(in_features, out_features)
         self.norm = nn.BatchNorm1d(out_features, 0.8)
         self.should_normalize = should_normalize
-        self.dropout = nn.Dropout(dropout)
         self.activation = nn.LeakyReLU(0.2)
 
     def forward(self, x):
-        x = self.linear(x)
+        z = self.linear(x)
         if self.should_normalize:
-            x = self.norm(x)
-        x = self.dropout(x)
-        x = self.activation(x)
-        return x
+            z = self.norm(z)
+        z = self.activation(z)
+        return z
+
+
+class DBlock(nn.Module):
+    def __init__(
+        self,
+        in_features,
+        out_features,
+        dropout_val=0.3,
+    ):
+        super().__init__()
+        self.linear = nn.Linear(in_features, out_features)
+        self.norm = nn.BatchNorm1d(out_features, 0.8)
+        self.dropout = nn.Dropout(dropout_val)
+        self.activation = nn.LeakyReLU(0.2)
+
+    def forward(self, x):
+        z = self.linear(x)
+        z = self.activation(z)
+        z = self.dropout(z)
+        return z
 
 
 class Generator(nn.Module):
@@ -31,10 +48,10 @@ class Generator(nn.Module):
         super().__init__()
         self.img_shape = img_shape
         self.model = nn.Sequential(
-            Block(latent_dim, 128, should_normalize=False),
-            Block(128, 256),
-            Block(256, 512),
-            Block(512, 1024),
+            GBlock(latent_dim, 128, should_normalize=False),
+            GBlock(128, 256),
+            GBlock(256, 512),
+            GBlock(512, 1024),
             nn.Linear(1024, int(np.prod(self.img_shape))),
             nn.Tanh()
         )
@@ -49,11 +66,10 @@ class Discriminator(nn.Module):
     def __init__(self, img_shape):
         super().__init__()
         self.model = nn.Sequential(
-            nn.Linear(int(np.prod(img_shape)), 512),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(512, 256),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(256, 1),
+            DBlock(int(np.prod(img_shape)), 1024),
+            DBlock(1024, 512),
+            DBlock(512, 256),
+            DBlock(256, 1),
             nn.Sigmoid(),
         )
 
