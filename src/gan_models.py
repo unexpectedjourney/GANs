@@ -32,7 +32,6 @@ class DBlock(nn.Module):
     ):
         super().__init__()
         self.linear = nn.Linear(in_features, out_features)
-        self.norm = nn.BatchNorm1d(out_features, 0.8)
         self.dropout = nn.Dropout(dropout_val)
         self.activation = nn.LeakyReLU(0.2)
 

@@ -6,6 +6,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 
 from src.gan import GAN
+from src.dcgan import DCGAN
 from src.utils import load_config
 from src.data import BirdDataModule
 
@@ -26,7 +27,14 @@ def main():
     tb_logger = TensorBoardLogger("logs", name="gan")
 
     dm = BirdDataModule(batch_size=batch_size, num_workers=NUM_WORKERS)
-    model = GAN(conf)
+
+    gan_type = conf.get("gan_type")
+    if gan_type == "gan":
+        model = GAN(conf)
+    if gan_type == "dcgan":
+        model = DCGAN(conf)
+    print(gan_type)
+
     trainer = pl.Trainer(
         gpus=AVAIL_GPUS,
         max_epochs=epochs,
