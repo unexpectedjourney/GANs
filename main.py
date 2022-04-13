@@ -15,12 +15,13 @@ NUM_WORKERS = int(os.cpu_count() / 2)
 
 def main():
     conf = load_config("configs/default_config.yaml")
-    epochs = conf.get("epochs", 10)
+    train_params = conf.get("train", {})
+    epochs = train_params.get("epochs", 10)
     batch_size = conf.get("batch_size", 32)
     checkpoint_callback = ModelCheckpoint(
         monitor='g_loss',
         dirpath='states',
-        filename='state-{epoch:02d}-{val_loss:.2f}'
+        filename='state-{epoch:02d}-{g_loss:.2f}'
     )
     tb_logger = TensorBoardLogger("logs", name="gan")
 
