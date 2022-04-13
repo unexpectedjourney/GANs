@@ -71,7 +71,8 @@ class GAN(pl.LightningModule):
         return [opt_g, opt_d], []
 
     def training_epoch_end(self, outputs):
-        self.generated_imgs = self(self.validation_z)
+        z = self.validation_z.to(self.device)
+        self.generated_imgs = self(z)
         sample_imgs = self.generated_imgs[:6]
         grid = utils.make_grid(sample_imgs)
         self.logger.experiment.add_image(

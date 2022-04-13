@@ -19,13 +19,6 @@ def main():
     train_params = conf.get("train", {})
     epochs = train_params.get("epochs", 10)
     batch_size = conf.get("batch_size", 32)
-    checkpoint_callback = ModelCheckpoint(
-        monitor='g_loss',
-        dirpath='states',
-        filename='state-{epoch:02d}-{g_loss:.2f}'
-    )
-    tb_logger = TensorBoardLogger("logs", name="gan")
-
     dm = BirdDataModule(batch_size=batch_size, num_workers=NUM_WORKERS)
 
     gan_type = conf.get("gan_type")
@@ -34,6 +27,14 @@ def main():
     if gan_type == "dcgan":
         model = DCGAN(conf)
     print(gan_type)
+
+    filename = gan_type + '_state-{epoch:02d}-{g_loss:.2f}'
+    checkpoint_callback = ModelCheckpoint(
+        monitor='g_loss',
+        dirpath='states',
+        filename=filename
+    )
+    tb_logger = TensorBoardLogger("logs", name=gan_type)
 
     trainer = pl.Trainer(
         gpus=AVAIL_GPUS,

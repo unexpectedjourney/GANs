@@ -34,7 +34,6 @@ class DCGAN(pl.LightningModule):
         return self.generator(x)
 
     def adversarial_loss(self, y_hat, y):
-        print(y_hat.size(), y.size())
         return F.binary_cross_entropy(y_hat, y)
 
     def training_step(self, batch, batch_idx, optimizer_idx):
@@ -72,7 +71,8 @@ class DCGAN(pl.LightningModule):
         return [opt_g, opt_d], []
 
     def training_epoch_end(self, outputs):
-        self.generated_imgs = self(self.validation_z)
+        z = self.validation_z.to(self.device)
+        self.generated_imgs = self(z)
         sample_imgs = self.generated_imgs[:6]
         grid = utils.make_grid(sample_imgs)
         self.logger.experiment.add_image(
