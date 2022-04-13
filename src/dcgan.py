@@ -44,15 +44,6 @@ class DCGAN(pl.LightningModule):
         z = z.type_as(imgs)
         loss = 0
         if optimizer_idx == 0:
-            self.generated_imgs = self(z)
-
-            sample_imgs = self.generated_imgs[:6]
-            grid = utils.make_grid(sample_imgs)
-            self.logger.experiment.add_image(
-                "generated_images",
-                grid,
-                self.current_epoch,
-            )
             valid = torch.ones(imgs.size(0))
             valid = valid.type_as(imgs)
 
@@ -79,3 +70,13 @@ class DCGAN(pl.LightningModule):
             self.discriminator.parameters(), lr=self.lr, betas=(self.b1, self.b2)
         )
         return [opt_g, opt_d], []
+
+    def training_epoch_end(self, outputs):
+        self.generated_imgs = self(self.validation_z)
+        sample_imgs = self.generated_imgs[:6]
+        grid = utils.make_grid(sample_imgs)
+        self.logger.experiment.add_image(
+            "generated_images",
+            grid,
+            self.current_epoch,
+        )
