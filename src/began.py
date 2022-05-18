@@ -1,5 +1,4 @@
 import torch
-import torch.nn.functional as F
 import pytorch_lightning as pl
 from torchvision import utils
 
@@ -68,8 +67,11 @@ class BEGAN(pl.LightningModule):
             r_loss = self.adversarial_loss(self.discriminator(imgs), imgs)
 
             loss = r_loss - self.k * g_loss
-            self.k = self.k + self.lambda_k * (self.gamma * r_loss - g_loss)
-            M = (r_loss + torch.abs(self.gamma * r_loss - g_loss)).data[0]
+            diff = torch.mean(self.gamma * r_loss - g_loss)
+            self.k = self.k + self.lambda_k * diff.item()
+            self.k = min(max(0, self.k), 1)
+
+            M = (r_loss + torch.abs(diff)).item()
             self.log('d_loss', loss, logger=True)
             self.log('M', M, logger=True)
         return loss

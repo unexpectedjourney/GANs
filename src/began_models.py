@@ -13,7 +13,9 @@ class Decoder(nn.Module):
         blocks_num,
     ):
         super().__init__()
-        self.l1 = nn.Linear(latent_dim, 8*8*hidden_dim)
+        self.init_size = 8
+        self.hidden_dim = hidden_dim
+        self.l1 = nn.Linear(latent_dim, self.init_size*self.init_size*hidden_dim)
         layers = []
         for i in range(blocks_num):
             layers.append(nn.Conv2d(hidden_dim, hidden_dim, 3, 1, 1))
@@ -30,9 +32,15 @@ class Decoder(nn.Module):
         self.conv = nn.Sequential(*layers)
 
     def forward(self, x):
-        h0 = self.l1(x)
-        z = self.conv(h0)
+        x = x.squeeze()
+        z = self.l1(x)
+        z = z.view(z.shape[0], self.hidden_dim, self.init_size, self.init_size)
+        z = self.conv(z)
         return z
+
+    def weight_init(self, mean, std):
+        for m in self._modules:
+            normal_init(self._modules[m], mean, std)
 
 
 class Encoder(nn.Module):
@@ -54,7 +62,7 @@ class Encoder(nn.Module):
             if i < blocks_num:
                 layers.append(nn.Conv2d(i * hidden_dim, (i+1) * hidden_dim, 3, 2, 1))
             else:
-                layers.append(nn.Conv2d(i * hidden_dim, (i+1) * hidden_dim, 3, 1, 1))
+                layers.append(nn.Conv2d(i * hidden_dim, i * hidden_dim, 3, 1, 1))
             layers.append(nn.ELU(True))
 
         self.conv = nn.Sequential(*layers)
@@ -62,8 +70,13 @@ class Encoder(nn.Module):
 
     def forward(self, x):
         z = self.conv(x)
+        z = z.view(z.size(0), -1)
         z = self.l1(z)
         return z
+
+    def weight_init(self, mean, std):
+        for m in self._modules:
+            normal_init(self._modules[m], mean, std)
 
 
 class Generator(nn.Module):
@@ -82,8 +95,7 @@ class Generator(nn.Module):
         return x
 
     def weight_init(self, mean, std):
-        for m in self._modules:
-            normal_init(self._modules[m], mean, std)
+        self.decoder.weight_init(mean, std)
 
 
 class Discriminator(nn.Module):
@@ -105,5 +117,5 @@ class Discriminator(nn.Module):
         return x
 
     def weight_init(self, mean, std):
-        for m in self._modules:
-            normal_init(self._modules[m], mean, std)
+        self.encoder.weight_init(mean, std)
+        self.decoder.weight_init(mean, std)
