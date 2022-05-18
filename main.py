@@ -18,7 +18,6 @@ NUM_WORKERS = int(os.cpu_count() / 2)
 
 def main(gan_type=None):
     conf = load_config("configs/default_config.yaml")
-    gan_type = conf.get("gan_type")
     if gan_type == "gan":
         conf = load_config("configs/gan_config.yaml")
         model = GAN(conf)
