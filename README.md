@@ -32,9 +32,11 @@ I have used [BIRDS 400 - SPECIES IMAGE CLASSIFICATION](https://www.kaggle.com/da
 2. DCGAN[2]
 3. BEGAN[3]
 4. WGAN[4]
+4. WGAN-GP[5]
 
 ## References
 1. [Generative Adversarial Networks](https://arxiv.org/abs/1406.2661)
 2. [Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks](https://arxiv.org/abs/1511.06434)
 3. [BEGAN: Boundary Equilibrium Generative Adversarial Networks](https://arxiv.org/abs/1703.10717)
 4. [Wasserstein GAN](https://arxiv.org/abs/1701.07875)
+5. [Improved Training of Wasserstein GANs](https://arxiv.org/pdf/1704.00028.pdf)
