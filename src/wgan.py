@@ -43,16 +43,11 @@ class WGAN(pl.LightningModule):
         clip_value = 0.01
 
         loss = 0
-        if optimizer_idx == 0:
+        if optimizer_idx == 1:
             loss = -torch.mean(self.discriminator(self(z)))
             self.log('g_loss', loss, logger=True)
-        if optimizer_idx == 1:
+        if optimizer_idx == 0:
             loss = -torch.mean(self.discriminator(imgs)) + torch.mean(self.discriminator(self(z)))
-            print(
-                torch.mean(self.discriminator(imgs)),
-                torch.mean(self.discriminator(self(z))),
-                flush=True
-            )
             for p in self.discriminator.parameters():
                 p.data.clamp_(-clip_value, clip_value)
 
@@ -68,10 +63,10 @@ class WGAN(pl.LightningModule):
         opt_d = torch.optim.RMSprop(
             self.discriminator.parameters(), lr=self.lr,
         )
-        return (
+        return [
+            {'optimizer': opt_d, 'frequency': n_critic},
             {'optimizer': opt_g, 'frequency': 1},
-            {'optimizer': opt_d, 'frequency': n_critic}
-        )
+        ]
 
     def training_epoch_end(self, outputs):
         z = self.validation_z.to(self.device)

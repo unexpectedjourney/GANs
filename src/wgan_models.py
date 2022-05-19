@@ -47,7 +47,7 @@ class Generator(nn.Module):
             GBlock(512, 512),
             GBlock(512, 512),
             nn.Linear(512, int(np.prod(self.img_shape))),
-            nn.Tanh()
+            nn.Tanh(),
         )
 
     def forward(self, z):
