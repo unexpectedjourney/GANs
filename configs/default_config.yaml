@@ -1,9 +1,8 @@
 seed: 4567
 batch_size: 32
-gan_type: "gan"
 latent_dim: 100
 train:
-  epochs: 40
+  epochs: 1000
   lr: 0.0002
   b1: 0.5
   b2: 0.999

@@ -7,7 +7,7 @@ from torchvision import transforms as T
 
 class BirdDataset(Dataset):
     def __init__(self, df, transform=None):
-        self.df = df
+        self.df = df.head(3)
         self.transform = transform
 
     def __getitem__(self, idx):
