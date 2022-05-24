@@ -1,10 +1,5 @@
 import torch.nn as nn
-
-
-def normal_init(m, mean, std):
-    if isinstance(m, nn.ConvTranspose2d) or isinstance(m, nn.Conv2d):
-        m.weight.data.normal_(mean, std)
-        m.bias.data.zero_()
+from src.utils import normal_init
 
 
 class GBlock(nn.Module):
@@ -81,8 +76,7 @@ class Generator(nn.Module):
         )
 
     def weight_init(self, mean, std):
-        for m in self._modules:
-            normal_init(self._modules[m], mean, std)
+        self.model.apply(normal_init)
 
     def forward(self, z):
         img = self.model(z)
@@ -102,8 +96,7 @@ class Discriminator(nn.Module):
         )
 
     def weight_init(self, mean, std):
-        for m in self._modules:
-            normal_init(self._modules[m], mean, std)
+        self.model.apply(normal_init)
 
     def forward(self, img):
         validity = self.model(img)

@@ -11,7 +11,7 @@ def load_config(config_path):
     return config
 
 
-def normal_init(m, mean, std):
+def normal_init(m, mean=0., std=0.02):
     if isinstance(m, nn.ConvTranspose2d) or isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
         m.weight.data.normal_(mean, std)
         m.bias.data.zero_()

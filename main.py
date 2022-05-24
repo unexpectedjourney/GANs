@@ -10,6 +10,7 @@ from src.gan import GAN
 from src.dcgan import DCGAN
 from src.began import BEGAN
 from src.wgan import WGAN
+from src.lsgan import LSGAN
 from src.utils import load_config
 from src.data import BirdDataModule
 
@@ -31,6 +32,9 @@ def main(gan_type=None):
     if gan_type == "wgan":
         conf = load_config("configs/wgan_config.yaml")
         model = WGAN(conf)
+    if gan_type == "lsgan":
+        conf = load_config("configs/lsgan_config.yaml")
+        model = LSGAN(conf)
     else:
         print("Bye")
         return
